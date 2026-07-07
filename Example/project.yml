@@ -1,0 +1,22 @@
+name: OddittExample
+options:
+  bundleIdPrefix: com.odditt.example
+  deploymentTarget:
+    iOS: "15.0"
+packages:
+  OddittSDK:
+    path: ..
+targets:
+  OddittExample:
+    type: application
+    platform: iOS
+    sources:
+      - Sources
+    dependencies:
+      - package: OddittSDK
+    settings:
+      base:
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: true
+        INFOPLIST_KEY_UILaunchScreen_Generation: true
+        # Allow cleartext localhost during development.
+        INFOPLIST_KEY_NSAppTransportSecurity: {}

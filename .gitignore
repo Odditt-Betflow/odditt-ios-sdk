@@ -1,0 +1,20 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+Package.resolved
+
+# Xcode
+DerivedData/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+build/
+
+# CocoaPods
+Pods/
+
+# Example (generated project)
+Example/*.xcodeproj
+
+# OS / editor
+.DS_Store
+.idea/

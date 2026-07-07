@@ -1,0 +1,23 @@
+# SwiftFormat configuration for OddittSDK.
+# https://github.com/nicklockwood/SwiftFormat/blob/master/Rules.md
+
+--allman false
+--commas always
+--elseposition same-line
+--empty void
+--header ignore
+--ifdef indent
+--indent 4
+--indentcase false
+--linebreaks lf
+--maxwidth 120
+--patternlet hoist
+--self remove
+--semicolons inline
+--stripunusedargs always
+--swiftversion 5.9
+--trimwhitespace always
+--wraparguments preserve
+--wrapcollections preserve
+
+--enable isEmpty
