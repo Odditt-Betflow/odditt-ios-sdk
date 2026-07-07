@@ -1,5 +1,5 @@
-import XCTest
 @testable import OddittSDK
+import XCTest
 
 final class SignalParserTests: XCTestCase {
     private func envelope(_ type: String, _ payload: [String: Any]) -> String {

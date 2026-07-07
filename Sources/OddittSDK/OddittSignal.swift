@@ -40,18 +40,18 @@ public enum OddittSignal {
         case let .widgetReady(timestamp),
              let .widgetEmpty(timestamp),
              let .contentHeightChanged(_, timestamp):
-            return timestamp
+            timestamp
         case let .widgetError(_, _, _, timestamp),
              let .pageLoaded(_, _, _, timestamp):
-            return timestamp
+            timestamp
         case let .betClicked(_, _, _, _, _, timestamp):
-            return timestamp
+            timestamp
         case let .filterChanged(_, timestamp),
              let .unknown(_, _, timestamp):
-            return timestamp
+            timestamp
         case let .graphExpanded(_, _, timestamp),
              let .graphCollapsed(_, _, timestamp):
-            return timestamp
+            timestamp
         }
     }
 }

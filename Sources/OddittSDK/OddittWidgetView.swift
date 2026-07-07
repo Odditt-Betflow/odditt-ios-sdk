@@ -58,7 +58,7 @@ public final class OddittWidgetView: UIView, WKScriptMessageHandler {
 
         let configuration = WKWebViewConfiguration()
         configuration.userContentController = controller
-        self.webView = WKWebView(frame: .zero, configuration: configuration)
+        webView = WKWebView(frame: .zero, configuration: configuration)
 
         super.init(frame: .zero)
 

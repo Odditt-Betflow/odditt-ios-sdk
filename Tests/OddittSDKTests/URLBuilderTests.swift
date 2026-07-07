@@ -1,5 +1,5 @@
-import XCTest
 @testable import OddittSDK
+import XCTest
 
 final class URLBuilderTests: XCTestCase {
     // MARK: toQueryParameters
@@ -52,12 +52,12 @@ final class URLBuilderTests: XCTestCase {
 
     // MARK: buildWidgetUrl
 
-    func testAppendsConfigAsQueryParams() {
+    func testAppendsConfigAsQueryParams() throws {
         let url = buildWidgetUrl(
             baseUrl: "https://demo.odditt.com/",
             config: OddittWidgetConfig(country: "US", colorMode: "dark")
         )
-        let components = URLComponents(string: url)!
+        let components = try XCTUnwrap(URLComponents(string: url))
         XCTAssertEqual(components.host, "demo.odditt.com")
         XCTAssertTrue(url.contains("country=US"))
         XCTAssertTrue(url.contains("colorMode=dark"))
@@ -89,12 +89,12 @@ final class URLBuilderTests: XCTestCase {
         XCTAssertFalse(url.contains("country=CA"))
     }
 
-    func testHandlesHostPortLoopback() {
+    func testHandlesHostPortLoopback() throws {
         let url = buildWidgetUrl(
             baseUrl: "http://10.0.2.2:3000",
             config: OddittWidgetConfig(country: "US")
         )
-        let components = URLComponents(string: url)!
+        let components = try XCTUnwrap(URLComponents(string: url))
         XCTAssertEqual(components.host, "10.0.2.2")
         XCTAssertEqual(components.port, 3000)
         XCTAssertTrue(url.contains("country=US"))

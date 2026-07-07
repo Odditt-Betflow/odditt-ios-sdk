@@ -126,7 +126,7 @@ public struct OddittWidgetConfig {
 
     /// Coerce a single value to its query-string form, or `nil` to omit it.
     static func coerce(_ value: Any?) -> String? {
-        guard let value = value, !(value is NSNull) else { return nil }
+        guard let value, !(value is NSNull) else { return nil }
         if let b = value as? Bool { return b ? "true" : "false" }
         if let s = value as? String { return s.isEmpty ? nil : s }
         if let i = value as? Int { return String(i) }

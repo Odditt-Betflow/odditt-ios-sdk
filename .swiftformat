@@ -6,7 +6,7 @@
 --elseposition same-line
 --empty void
 --header ignore
---ifdef indent
+--ifdef no-indent
 --indent 4
 --indentcase false
 --linebreaks lf
