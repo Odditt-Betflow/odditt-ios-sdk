@@ -23,8 +23,10 @@ public enum OddittBridge {
     """
 
     /// Injected at document-end. Verbatim port of the Flutter SDK bridge script.
-    /// Forwards every `window` `message` event with a `.type` to the bridge, and
-    /// reports content height via a `ResizeObserver` under `__CONTENT_HEIGHT__`.
+    /// Forwards every `window` `message` event with a `.type` to the bridge,
+    /// captures affiliate click-outs (`window.open` and `target="_blank"`
+    /// anchors) under `__EXTERNAL_URL__`, and reports content height via a
+    /// `ResizeObserver` under `__CONTENT_HEIGHT__`.
     /// Guarded by `__oddittBridgeInstalled__` so repeated injection is a no-op.
     public static let bridgeScript = """
     (function () {
@@ -37,11 +39,43 @@ public enum OddittBridge {
         } catch (e) {}
       }
 
+      function sendExternalUrl(url, target) {
+        send({
+          type: '__EXTERNAL_URL__',
+          payload: { url: String(url), target: target ? String(target) : '' },
+          timestamp: Date.now(),
+        });
+      }
+
       window.addEventListener('message', function (event) {
         if (event && event.data && typeof event.data === 'object' && event.data.type) {
           send(event.data);
         }
       });
+
+      // Returning null mirrors a popup-blocked window.open, which the widget's
+      // click-out path already tolerates.
+      var nativeOpen = window.open;
+      window.open = function (url, target) {
+        if (url) {
+          sendExternalUrl(url, target);
+          return null;
+        }
+        return nativeOpen ? nativeOpen.apply(window, arguments) : null;
+      };
+
+      // Anchors with target="_blank" never route through window.open.
+      document.addEventListener(
+        'click',
+        function (event) {
+          var el = event.target;
+          while (el && el.tagName !== 'A') el = el.parentElement;
+          if (!el || !el.href || el.target !== '_blank') return;
+          event.preventDefault();
+          sendExternalUrl(el.href, '_blank');
+        },
+        true
+      );
 
       var lastHeight = -1;
       function reportHeight() {

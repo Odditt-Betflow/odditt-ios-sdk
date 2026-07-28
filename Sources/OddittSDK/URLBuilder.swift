@@ -8,7 +8,17 @@ import Foundation
 /// Any query params already present on `baseUrl` are preserved; `config` values
 /// override them on key collision. `parentOrigin` is never emitted. Commas in
 /// list params are kept literal so the widget's parser can split them.
-public func buildWidgetUrl(baseUrl: String, config: OddittWidgetConfig) -> String {
+///
+/// A `device_type` param is seeded from `deviceType` (default `"ios"`) so the
+/// widget's affiliate click-out picks the right deep link. Without it the widget
+/// falls back to user-agent sniffing, which is unreliable inside a `WKWebView`
+/// and silently degrades to the desktop link. `config` — and therefore
+/// `extraParams["device_type"]` — still overrides the seeded value.
+public func buildWidgetUrl(
+    baseUrl: String,
+    config: OddittWidgetConfig,
+    deviceType: String = "ios"
+) -> String {
     var withoutFragment = baseUrl
     var fragment = ""
     if let hashIdx = baseUrl.firstIndex(of: "#") {
@@ -41,6 +51,10 @@ public func buildWidgetUrl(baseUrl: String, config: OddittWidgetConfig) -> Strin
                 set(decodeComponent(raw), "")
             }
         }
+    }
+
+    if !deviceType.isEmpty {
+        set("device_type", deviceType)
     }
 
     for (key, value) in config.toQueryParameters() {

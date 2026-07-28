@@ -101,7 +101,25 @@ final class URLBuilderTests: XCTestCase {
     }
 
     func testEmptyConfigProducesNoQuery() {
-        let url = buildWidgetUrl(baseUrl: "https://demo.odditt.com/", config: OddittWidgetConfig())
+        let url = buildWidgetUrl(
+            baseUrl: "https://demo.odditt.com/",
+            config: OddittWidgetConfig(),
+            deviceType: ""
+        )
         XCTAssertEqual(url, "https://demo.odditt.com/")
+    }
+
+    func testSeedsDeviceTypeForAffiliateDeepLinks() {
+        let url = buildWidgetUrl(baseUrl: "https://demo.odditt.com/", config: OddittWidgetConfig())
+        XCTAssertTrue(url.contains("device_type=ios"))
+    }
+
+    func testExtraParamsDeviceTypeOverridesSeededValue() {
+        let url = buildWidgetUrl(
+            baseUrl: "https://demo.odditt.com/",
+            config: OddittWidgetConfig(extraParams: ["device_type": "desktop"])
+        )
+        XCTAssertTrue(url.contains("device_type=desktop"))
+        XCTAssertFalse(url.contains("device_type=ios"))
     }
 }

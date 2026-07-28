@@ -15,12 +15,24 @@ Built on `WKWebView`. iOS 13+.
 ### Swift Package Manager
 
 ```swift
-.package(url: "https://github.com/Odditt-Betflow/odditt-ios-sdk.git", from: "0.1.0")
+.package(url: "https://github.com/Odditt-Betflow/odditt-ios-sdk.git", branch: "main")
 ```
 
-Then add `"OddittSDK"` to your target's dependencies.
+Then add `"OddittSDK"` to your target's dependencies. `branch: "main"` tracks the
+latest published SDK; use `.revision("<sha>")` to pin a reproducible build.
+
+In Xcode: **File → Add Package Dependencies**, paste the repo URL, and choose
+**Dependency Rule → Branch → `main`**.
 
 ### CocoaPods
+
+Point the pod straight at the repo:
+
+```ruby
+pod 'OddittSDK', :git => 'https://github.com/Odditt-Betflow/odditt-ios-sdk.git', :branch => 'main'
+```
+
+### From CocoaPods trunk (once published)
 
 ```ruby
 pod 'OddittSDK', '~> 0.1'
@@ -42,9 +54,10 @@ struct Feed: View {
                 config: OddittWidgetConfig(
                     country: "US",
                     oddsFormat: "american",
-                    colorMode: "dark",       // dark | light
-                    layoutMode: "carousel",  // carousel | feed
-                    widgetMode: "operator",  // operator | affiliate | prediction-market
+                    colorMode: "dark",         // dark | light
+                    layoutMode: "carousel",    // carousel | feed
+                    widgetMode: "operator",    // operator | affiliate | clean
+                    productMode: "sportsbook", // sportsbook | dfs | prediction_market
                     sportIds: [1, 2],
                     extraParams: ["includeAltLines": true]
                 ),
@@ -77,13 +90,36 @@ rules: `Bool → "true"/"false"`, `[Int]/[String] → comma-joined`, `nil` omitt
 `buildWidgetUrl(baseUrl:config:)` composes the final URL. The widget detects a
 genuine native embed via the injected `OddittBridge` channel (no URL flag).
 
+`buildWidgetUrl` also seeds `device_type=ios` so the widget's affiliate click-out
+resolves the right deep link — inside a `WKWebView` its user-agent fallback is
+unreliable and degrades to the desktop URL. Override with
+`extraParams: ["device_type": "desktop"]` or the `deviceType:` argument.
+
 ### Signals
 
 Every post-back is decoded into a typed `OddittSignal` enum: `widgetReady`,
 `widgetEmpty`, `widgetError`, `betClicked`, `pageLoaded`, `filterChanged`,
-`graphExpanded`, `graphCollapsed`, `contentHeightChanged` (SDK-synthesized),
-`unknown` (forward-compat). Use `onSignal` for all, or the granular `onReady` /
-`onEmpty` / `onError` / `onBetClicked` callbacks.
+`graphExpanded`, `graphCollapsed`, `contentHeightChanged` and `externalUrl`
+(both SDK-synthesized), `unknown` (forward-compat). Use `onSignal` for all, or
+the granular `onReady` / `onEmpty` / `onError` / `onBetClicked` /
+`onExternalUrl` callbacks.
+
+### Affiliate click-outs
+
+In `widgetMode=affiliate` the widget opens tracked deep links with
+`window.open(url, "_blank")`, which a `WKWebView` cannot honour. The SDK
+intercepts those (plus `target="_blank"` anchors and custom-scheme navigations)
+and opens them with `UIApplication.shared.open`.
+
+Set `onExternalUrl` to take over — present an `SFSafariViewController` yourself,
+or attach your own tracking first:
+
+```swift
+OddittWidget(
+    baseUrl: "https://demo.odditt.com",
+    onExternalUrl: { url, _ in presentSafari(url) }
+)
+```
 
 ### Auto-height
 
@@ -91,15 +127,6 @@ There is no widget height signal, so the SDK injects a `ResizeObserver` that
 reports `document.body.scrollHeight` over the bridge; the view sizes itself to
 content (clamped by `minHeight`/`maxHeight`, default `120`/`5000`). Pass
 `autoHeight: false` to manage height yourself (the WebView then fills its bounds).
-
-## Deployment requirement
-
-The bridge injects a `message` listener into the WebView. In a WebView there is
-no iframe, so the widget's `window.parent.postMessage(data, targetOrigin)`
-dispatches to the WebView's own `window` — this only reaches the listener when
-`targetOrigin` is `"*"`. **Deploy the widget with `NEXT_PUBLIC_PARENT_ORIGIN="*"`**
-(the default) and do not set the `parentOrigin` embed param (the SDK never emits
-it). If the widget is pinned to a specific origin, no signals are received.
 
 ## Example
 

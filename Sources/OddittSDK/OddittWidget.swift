@@ -17,6 +17,7 @@ public struct OddittWidget: UIViewRepresentable {
     private let onEmpty: (() -> Void)?
     private let onError: ((_ message: String, _ status: Int?, _ phase: String) -> Void)?
     private let onBetClicked: ((OddittSignal) -> Void)?
+    private let onExternalUrl: ((_ url: String, _ target: String) -> Void)?
 
     public init(
         baseUrl: String,
@@ -26,7 +27,8 @@ public struct OddittWidget: UIViewRepresentable {
         onReady: (() -> Void)? = nil,
         onEmpty: (() -> Void)? = nil,
         onError: ((_ message: String, _ status: Int?, _ phase: String) -> Void)? = nil,
-        onBetClicked: ((OddittSignal) -> Void)? = nil
+        onBetClicked: ((OddittSignal) -> Void)? = nil,
+        onExternalUrl: ((_ url: String, _ target: String) -> Void)? = nil
     ) {
         self.baseUrl = baseUrl
         self.config = config
@@ -36,6 +38,7 @@ public struct OddittWidget: UIViewRepresentable {
         self.onEmpty = onEmpty
         self.onError = onError
         self.onBetClicked = onBetClicked
+        self.onExternalUrl = onExternalUrl
     }
 
     public func makeUIView(context _: Context) -> OddittWidgetView {
@@ -45,6 +48,7 @@ public struct OddittWidget: UIViewRepresentable {
         view.onEmpty = onEmpty
         view.onError = onError
         view.onBetClicked = onBetClicked
+        view.onExternalUrl = onExternalUrl
         view.load(baseUrl: baseUrl, config: config)
         return view
     }

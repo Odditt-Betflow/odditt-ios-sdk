@@ -15,7 +15,7 @@ public protocol OddittWidgetViewDelegate: AnyObject {
 /// ``delegate`` plus optional closures. With ``autoHeight`` (default) the view
 /// sizes itself to the widget's reported content height, clamped by
 /// ``minHeight``/``maxHeight``.
-public final class OddittWidgetView: UIView, WKScriptMessageHandler {
+public final class OddittWidgetView: UIView, WKScriptMessageHandler, WKNavigationDelegate {
     /// Receives every decoded signal.
     public weak var delegate: OddittWidgetViewDelegate?
 
@@ -29,6 +29,15 @@ public final class OddittWidgetView: UIView, WKScriptMessageHandler {
     public var onError: ((_ message: String, _ status: Int?, _ phase: String) -> Void)?
     /// Convenience closure for `BET_CLICKED`.
     public var onBetClicked: ((OddittSignal) -> Void)?
+    /// Called when the widget wants to open a URL outside the embed — the
+    /// affiliate click-out in `widgetMode=affiliate`, or any `target="_blank"`
+    /// anchor. When `nil`, the SDK opens the URL itself via
+    /// `UIApplication.shared.open` (Safari, or the target app for a deep link).
+    ///
+    /// Set this to route click-outs yourself — e.g. into an
+    /// `SFSafariViewController` you present, or to attach your own tracking
+    /// before opening.
+    public var onExternalUrl: ((_ url: String, _ target: String) -> Void)?
 
     /// When true (default), the view sizes itself to the widget's reported height.
     public let autoHeight: Bool
@@ -65,6 +74,7 @@ public final class OddittWidgetView: UIView, WKScriptMessageHandler {
         // Weak proxy avoids the message-handler retain cycle.
         controller.add(WeakScriptMessageHandler(self), name: OddittBridge.channelName)
 
+        webView.navigationDelegate = self
         webView.isOpaque = false
         webView.backgroundColor = .clear
         webView.scrollView.backgroundColor = .clear
@@ -126,9 +136,59 @@ public final class OddittWidgetView: UIView, WKScriptMessageHandler {
             onError?(message, status, phase)
         case .betClicked:
             onBetClicked?(signal)
+        case let .externalUrl(url, target, _):
+            handleExternalUrl(url, target)
         default:
             break
         }
+    }
+
+    // MARK: External links
+
+    private func handleExternalUrl(_ url: String, _ target: String) {
+        if let handler = onExternalUrl {
+            handler(url, target)
+            return
+        }
+        guard let parsed = URL(string: url) else { return }
+        // Fire-and-forget: a click-out with no handler app (an uninstalled
+        // sportsbook's deep link) must not break the embed.
+        UIApplication.shared.open(parsed, options: [:], completionHandler: nil)
+    }
+
+    // MARK: WKNavigationDelegate
+
+    /// Backstop for click-outs the injected script can't intercept:
+    /// custom-scheme deep links (`fanduel://`) and anchors that navigate the top
+    /// frame away from the widget origin. Everything on the widget's own origin
+    /// loads normally so its internal navigation keeps working.
+    public func webView(
+        _: WKWebView,
+        decidePolicyFor navigationAction: WKNavigationAction,
+        decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+    ) {
+        guard let target = navigationAction.request.url else {
+            decisionHandler(.allow)
+            return
+        }
+
+        let scheme = target.scheme?.lowercased() ?? ""
+        // In-page schemes the WebView must keep handling itself.
+        if ["about", "data", "blob", "javascript"].contains(scheme) {
+            decisionHandler(.allow)
+            return
+        }
+
+        let isWeb = scheme == "http" || scheme == "https"
+        let loadedHost = loadedUrl.flatMap { URL(string: $0)?.host }
+        if isWeb, target.host == loadedHost {
+            decisionHandler(.allow)
+            return
+        }
+
+        // Off-origin web URLs and custom-scheme deep links are click-outs.
+        decisionHandler(.cancel)
+        handleExternalUrl(target.absoluteString, "")
     }
 }
 

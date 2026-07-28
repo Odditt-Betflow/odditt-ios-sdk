@@ -28,6 +28,14 @@ public func parseSignal(_ raw: String) -> OddittSignal? {
         guard let height = asDouble(payload["height"]) else { return nil }
         return .contentHeightChanged(height: height, timestamp: timestamp)
 
+    case "__EXTERNAL_URL__":
+        guard let url = asString(payload["url"]), !url.isEmpty else { return nil }
+        return .externalUrl(
+            url: url,
+            target: asString(payload["target"]) ?? "",
+            timestamp: timestamp
+        )
+
     case "WIDGET_READY":
         return .widgetReady(timestamp: timestamp)
 

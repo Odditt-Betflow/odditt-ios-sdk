@@ -31,6 +31,10 @@ public enum OddittSignal {
     case graphCollapsed(flowId: String, flowType: String, timestamp: Int?)
     /// SDK-synthesized content height, in CSS pixels. Drives auto-sizing.
     case contentHeightChanged(height: Double, timestamp: Int?)
+    /// SDK-synthesized: the widget asked to open a URL outside the embed — the
+    /// affiliate click-out (`window.open(url, "_blank")`) or a `target="_blank"`
+    /// anchor. Opened in Safari unless the host sets `onExternalUrl`.
+    case externalUrl(url: String, target: String, timestamp: Int?)
     /// Any envelope whose wire `type` this SDK version does not recognize.
     case unknown(type: String, raw: [String: Any], timestamp: Int?)
 
@@ -50,7 +54,8 @@ public enum OddittSignal {
              let .unknown(_, _, timestamp):
             timestamp
         case let .graphExpanded(_, _, timestamp),
-             let .graphCollapsed(_, _, timestamp):
+             let .graphCollapsed(_, _, timestamp),
+             let .externalUrl(_, _, timestamp):
             timestamp
         }
     }

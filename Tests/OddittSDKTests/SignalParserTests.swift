@@ -117,6 +117,21 @@ final class SignalParserTests: XCTestCase {
         XCTAssertEqual(raw["type"] as? String, "SOMETHING_NEW")
     }
 
+    func testParsesSynthesizedExternalUrl() {
+        guard case let .externalUrl(url, target, _)? = parseSignal(
+            envelope("__EXTERNAL_URL__", ["url": "https://book.example/bet?ref=1", "target": "_blank"])
+        ) else {
+            return XCTFail("expected externalUrl")
+        }
+        XCTAssertEqual(url, "https://book.example/bet?ref=1")
+        XCTAssertEqual(target, "_blank")
+    }
+
+    func testDropsExternalUrlWithoutUrl() {
+        XCTAssertNil(parseSignal(envelope("__EXTERNAL_URL__", ["url": ""])))
+        XCTAssertNil(parseSignal(envelope("__EXTERNAL_URL__", [:])))
+    }
+
     func testReturnsNilForNonJsonAndObjectsWithoutStringType() {
         XCTAssertNil(parseSignal("not json"))
         XCTAssertNil(parseSignal("{\"payload\":{}}"))
